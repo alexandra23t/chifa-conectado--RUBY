@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHIFA CONECTADO - Sistema Logístico Inteligente</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        chifa: {
+                            950: '#2c0b0e',
+                            900: '#4a0e12',
+                            800: '#7a151b',
+                            700: '#a31c24',
+                            600: '#c8232c',
+                            100: '#fbe8e9',
+                            50: '#fdf2f2',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars & smooth transitions */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        .active-tab {
+            border-left: 4px solid #ffffff;
+            background-color: #7a151b !important;
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+        .step-completed {
+            background-color: #059669;
+            color: white;
+            border-color: #059669;
+        }
+        .step-active {
+            background-color: #c8232c;
+            color: white;
+            border-color: #c8232c;
+            box-shadow: 0 0 0 3px rgba(200, 35, 44, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800 antialiased h-screen overflow-hidden flex flex-col">
+
+    <!-- Header Principal -->
+    <header class="bg-chifa-900 text-white shadow-lg z-20 flex-shrink-0">
+        <div class="px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <button id="mobile-menu-btn" class="md:hidden text-white text-xl focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <span class="bg-chifa-600 text-white p-2 rounded-lg shadow-inner">
+                        <i class="fa-solid fa-fire-burner text-lg"></i>
+                    </span>
+                    <div>
+                        <h1 class="text-lg md:text-xl font-black tracking-wider leading-tight">CHIFA CONECTADO</h1>
+                        <p class="text-xs text-chifa-100 hidden sm:block">Controla tus insumos, compra solo lo necesario y reduce las mermas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner Informativo Superior & Fecha -->
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <div class="hidden lg:flex items-center space-x-4 text-xs bg-chifa-950 px-3 py-1.5 rounded-lg border border-chifa-800">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-carrot text-orange-400"></i> Frescura a tiempo</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-chart-line-down text-emerald-400"></i> Menos costos</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-utensils text-yellow-400"></i> 2 Woks abastecidos</span>
+                </div>
+                
+                <!-- Selector de Fecha / Reset -->
+                <div class="flex items-center space-x-2 bg-chifa-800 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                    <i class="fa-regular fa-calendar text-chifa-100"></i>
+                    <input type="date" id="system-date" value="2026-10-21" class="bg-transparent text-white border-none focus:outline-none cursor-pointer">
+                </div>
+
+                <button onclick="resetData()" title="Reiniciar datos de prueba" class="bg-chifa-700 hover:bg-chifa-600 text-white p-2 rounded-lg text-xs transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Reset</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Main Container -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-64 bg-chifa-950 text-white flex flex-col justify-between flex-shrink-0 absolute md:relative z-30 h-full transition-transform duration-300 transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+            <div class="overflow-y-auto flex-1">
+                <div class="p-4 bg-chifa-900 border-b border-chifa-800 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-chifa-100 font-bold">Navegación</span>
+                        <p class="text-xs text-gray-400">Flujo logístico en 9 pasos</p>
+                    </div>
+                    <button id="close-sidebar" class="md:hidden text-gray-300 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <nav class="py-2 space-y-0.5 text-sm">
+                    <button onclick="navigateTo(1)" id="nav-1" class="nav-btn active-tab w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">1</span>
+                        <i class="fa-solid fa-cash-register w-6"></i> Ventas Diarias
+                    </button>
+                    <button onclick="navigateTo(2)" id="nav-2" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">2</span>
+                        <i class="fa-solid fa-trash-can w-6"></i> Registro Mermas
+                    </button>
+                    <button onclick="navigateTo(3)" id="nav-3" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">3</span>
+                        <i class="fa-solid fa-chart-column w-6"></i> Análisis Mermas
+                    </button>
+                    <button onclick="navigateTo(4)" id="nav-4" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">4</span>
+                        <i class="fa-solid fa-calculator w-6"></i> Pronóstico Compras
+                    </button>
+                    <button onclick="navigateTo(5)" id="nav-5" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">5</span>
+                        <i class="fa-solid fa-truck-ramp-box w-6"></i> Pedido Proveedores
+                    </button>
+                    <button onclick="navigateTo(6)" id="nav-6" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">6</span>
+                        <i class="fa-solid fa-location-dot w-6"></i> Seguimiento Entregas
+                    </button>
+                    <button onclick="navigateTo(7)" id="nav-7" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">7</span>
+                        <i class="fa-solid fa-clipboard-check w-6"></i> Recepción & Calidad
+                    </button>
+                    <button onclick="navigateTo(8)" id="nav-8" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">8</span>
+                        <i class="fa-solid fa-warehouse w-6"></i> Inventario Almacén
+                    </button>
+                    <button onclick="navigateTo(9)" id="nav-9" class="nav-btn w-full flex items-center px-4 py-2.5 text-chifa-100 hover:bg-chifa-800 transition">
+                        <span class="w-6 text-center text-xs font-bold bg-chifa-600 text-white rounded-full mr-2 h-5 flex items-center justify-center">9</span>
+                        <i class="fa-solid fa-kitchen-set w-6"></i> Woks & Resultados
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="p-4 bg-chifa-900 border-t border-chifa-800 text-xs text-chifa-100 text-center">
+                <p class="font-bold">CHIFA LOGÍSTICO v2.5</p>
+                <p class="text-gray-400 mt-0.5">Sincronización en vivo</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-3 sm:p-6 bg-gray-100 flex flex-col justify-between">
+
+            <!-- Container Screen Views -->
+            <div id="screen-container" class="max-w-6xl mx-auto w-full">
+
+                <!-- PANTALLA 1: REGISTRO DE VENTAS DIARIAS -->
+                <div id="screen-1" class="screen-view space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">1</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Registro de ventas diarias</h2>
+                                <p class="text-xs text-chifa-100">Se registran las ventas de cada plato para conocer la demanda real.</p>
+                            </div>
+                        </div>
+                        <span id="sales-date-badge" class="bg-chifa-800 px-3 py-1 rounded text-xs font-semibold border border-chifa-700">21/10/2026</span>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-4 sm:p-6 border border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
+                                        <th class="p-3">Plato</th>
+                                        <th class="p-3 text-center">Cantidad Vendida</th>
+                                        <th class="p-3 text-right">Precio Unit. (S/)</th>
+                                        <th class="p-3 text-right">Subtotal (S/)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sales-table-body" class="divide-y divide-gray-100 text-sm">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fa-solid fa-sack-dollar text-2xl text-chifa-700"></i>
+                                <div>
+                                    <span class="text-xs font-bold uppercase text-gray-500">Total Ventas del Día</span>
+                                    <p id="sales-grand-total" class="text-2xl font-black text-chifa-900">S/ 0.00</p>
+                                </div>
+                            </div>
+                            <button onclick="saveSales()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                <span>Guardar Ventas & Continuar &rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 2: REGISTRO DE MERMAS -->
+                <div id="screen-2" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">2</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Registro de mermas (desperdicios)</h2>
+                                <p class="text-xs text-chifa-100">El encargado registra la cantidad de insumos que se perdió y el motivo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Formulario de Merma -->
+                        <div class="bg-white rounded-xl shadow-md p-5 border border-gray-200 lg:col-span-1">
+                            <h3 class="font-bold text-chifa-900 border-b pb-2 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-pen-to-square text-chifa-600"></i> Registrar nueva merma
+                            </h3>
+                            <form id="waste-form" onsubmit="addWasteRecord(event)" class="space-y-3 text-sm">
+                                <div>
+                                    <label class="block font-semibold text-gray-700 mb-1">Ingrediente</label>
+                                    <select id="waste-ingredient" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-chifa-600 focus:outline-none" required>
+                                        <!-- Dynamic options from inventory -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-gray-700 mb-1">Cantidad perdida (kg / L / un)</label>
+                                    <input type="number" step="0.1" id="waste-qty" value="0.8" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-chifa-600 focus:outline-none" required>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-gray-700 mb-1">Motivo principal</label>
+                                    <select id="waste-reason" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-chifa-600 focus:outline-none" required>
+                                        <option value="Se malogró">Se malogró / Deterioro</option>
+                                        <option value="Exceso de preparación">Exceso de preparación</option>
+                                        <option value="Porciones mal cortadas">Porciones mal cortadas</option>
+                                        <option value="Exceso de pedido">Exceso de pedido</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-gray-700 mb-1">Estación de origen</label>
+                                    <select id="waste-station" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-chifa-600 focus:outline-none" required>
+                                        <option value="Línea 1 - Chaufa/Tallarín">Línea 1 - Chaufa/Tallarín</option>
+                                        <option value="Línea 2 - Platos Especiales">Línea 2 - Platos Especiales</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-gray-700 mb-1">Foto / Evidencia (Opcional)</label>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
+                                        <i class="fa-solid fa-camera text-gray-400 text-xl"></i>
+                                        <p class="text-xs text-gray-500 mt-1">Cebolla china_desperdicio.jpg (cargado)</p>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-chifa-700 hover:bg-chifa-800 text-white font-bold py-2.5 rounded-lg shadow transition mt-2 flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus-circle"></i> Guardar Merma
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Historial de Mermas Registradas -->
+                        <div class="bg-white rounded-xl shadow-md p-5 border border-gray-200 lg:col-span-2 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-chifa-900 border-b pb-2 mb-4 flex items-center justify-between">
+                                    <span><i class="fa-solid fa-list text-chifa-600"></i> Historial de Mermas del Día</span>
+                                    <span id="waste-count-badge" class="bg-chifa-100 text-chifa-800 text-xs px-2.5 py-0.5 rounded-full font-bold">0 registros</span>
+                                </h3>
+                                <div class="overflow-y-auto max-h-80 border rounded-lg">
+                                    <table class="w-full text-left text-sm">
+                                        <thead class="bg-gray-100 text-gray-600 text-xs uppercase sticky top-0">
+                                            <tr>
+                                                <th class="p-2.5">Insumo</th>
+                                                <th class="p-2.5">Cantidad</th>
+                                                <th class="p-2.5">Motivo</th>
+                                                <th class="p-2.5">Estación</th>
+                                                <th class="p-2.5 text-center">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="waste-history-body" class="divide-y divide-gray-100">
+                                            <!-- Dynamic Waste List -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex justify-between items-center pt-4 border-t">
+                                <button onclick="navigateTo(1)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                    &larr; Volver a Ventas
+                                </button>
+                                <button onclick="navigateTo(3)" class="bg-chifa-600 hover:bg-chifa-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow">
+                                    Ver Análisis de Mermas &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 3: ANÁLISIS DE MERMAS POR DÍA E INGREDIENTE -->
+                <div id="screen-3" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">3</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Análisis de mermas por día e ingrediente</h2>
+                                <p class="text-xs text-chifa-100">El sistema muestra qué días se genera más merma y en qué insumos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-6">
+                        
+                        <!-- Banner de Alerta Crítica -->
+                        <div class="bg-red-50 border-l-4 border-chifa-600 p-4 rounded-r-xl flex items-start space-x-3">
+                            <div class="text-chifa-600 text-2xl mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div>
+                                <h4 class="font-bold text-chifa-900 text-sm uppercase">Alerta de Pérdidas Detectada</h4>
+                                <p class="text-xs text-red-800 mt-1">
+                                    <strong>Los martes se genera mayor merma (3.5 kg en promedio)</strong>, principalmente en verduras por mala preparación y exceso de pedido.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico Visual de Mermas por Día -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <h4 class="font-bold text-sm text-gray-700 mb-3 flex items-center justify-between">
+                                    <span>Merma total por día de la semana (Últimas 4 semanas)</span>
+                                    <span class="text-xs text-gray-500 font-normal">en kg</span>
+                                </h4>
+                                <div class="h-48 flex items-end justify-between gap-2 pt-6 px-2 border-b border-gray-300">
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-gray-600 mb-1">2.8</span>
+                                        <div class="w-full bg-blue-500 rounded-t" style="height: 56%;"></div>
+                                        <span class="text-xs font-semibold text-gray-500 mt-2">Lun</span>
+                                    </div>
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-red-600 mb-1">3.5</span>
+                                        <div class="w-full bg-chifa-600 rounded-t shadow-md" style="height: 70%;"></div>
+                                        <span class="text-xs font-bold text-red-600 mt-2">Mar</span>
+                                    </div>
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-gray-600 mb-1">2.1</span>
+                                        <div class="w-full bg-blue-500 rounded-t" style="height: 42%;"></div>
+                                        <span class="text-xs font-semibold text-gray-500 mt-2">Mié</span>
+                                    </div>
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-gray-600 mb-1">1.8</span>
+                                        <div class="w-full bg-blue-500 rounded-t" style="height: 36%;"></div>
+                                        <span class="text-xs font-semibold text-gray-500 mt-2">Jue</span>
+                                    </div>
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-gray-600 mb-1">1.2</span>
+                                        <div class="w-full bg-blue-500 rounded-t" style="height: 24%;"></div>
+                                        <span class="text-xs font-semibold text-gray-500 mt-2">Vie</span>
+                                    </div>
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-gray-600 mb-1">0.9</span>
+                                        <div class="w-full bg-blue-500 rounded-t" style="height: 18%;"></div>
+                                        <span class="text-xs font-semibold text-gray-500 mt-2">Sáb</span>
+                                    </div>
+                                    <div class="flex flex-col items-center flex-1">
+                                        <span class="text-xs font-bold text-gray-600 mb-1">1.5</span>
+                                        <div class="w-full bg-blue-500 rounded-t" style="height: 30%;"></div>
+                                        <span class="text-xs font-semibold text-gray-500 mt-2">Dom</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla de Ingredientes con Mayor Merma -->
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-bold text-sm text-gray-700 mb-3">Ingredientes con mayor merma acumulada</h4>
+                                    <table class="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-200 text-gray-600 uppercase">
+                                                <th class="p-2">Ingrediente</th>
+                                                <th class="p-2 text-right">Merma Semanal</th>
+                                                <th class="p-2">Motivo Principal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 text-gray-700">
+                                            <tr>
+                                                <td class="p-2 font-semibold">Cebolla china</td>
+                                                <td class="p-2 text-right font-bold text-red-600">6.2 kg</td>
+                                                <td class="p-2 text-gray-500">Exceso de preparación</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-2 font-semibold">Zanahoria</td>
+                                                <td class="p-2 text-right font-bold text-red-600">4.8 kg</td>
+                                                <td class="p-2 text-gray-500">Deterioro / Almacén</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-2 font-semibold">Pimiento</td>
+                                                <td class="p-2 text-right font-bold text-red-600">3.1 kg</td>
+                                                <td class="p-2 text-gray-500">Porciones mal cortadas</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-2 font-semibold">Pollo</td>
+                                                <td class="p-2 text-right font-bold text-red-600">2.5 kg</td>
+                                                <td class="p-2 text-gray-500">Exceso de pedido</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 pt-3 border-t flex justify-between text-xs text-gray-600 font-semibold">
+                                    <span>Total Mermas Registradas:</span>
+                                    <span id="total-waste-sum" class="text-chifa-900 font-extrabold">16.6 kg</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button onclick="navigateTo(2)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Volver a Mermas
+                            </button>
+                            <button onclick="navigateTo(4)" class="bg-chifa-600 hover:bg-chifa-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow">
+                                Ir a Pronóstico de Demanda &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 4: PRONÓSTICO DE DEMANDA Y SUGERENCIA DE COMPRA -->
+                <div id="screen-4" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">4</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Pronóstico de demanda y sugerencia de compra</h2>
+                                <p class="text-xs text-chifa-100">Con base en las ventas, mermas y stock actual, el sistema calcula cuánto comprar.</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-chifa-800 px-3 py-1 rounded border border-chifa-700">Semana: 27/10/2026 - 02/11/2026</span>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-xs uppercase border-b">
+                                        <th class="p-3">Ingrediente</th>
+                                        <th class="p-3">Stock Actual</th>
+                                        <th class="p-3">Consumo Previsto</th>
+                                        <th class="p-3">Merma Estimada</th>
+                                        <th class="p-3">Stock Esperado</th>
+                                        <th class="p-3 text-center">Sugerencia de Compra</th>
+                                        <th class="p-3">Presentación</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="forecast-table-body" class="divide-y divide-gray-100">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Info Box explicativo -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start space-x-3 text-xs text-blue-900">
+                            <i class="fa-solid fa-circle-info text-blue-600 text-lg mt-0.5"></i>
+                            <p>
+                                <strong>Lógica Inteligente:</strong> El sistema calcula automáticamente la sugerencia de compra balanceando la proyección de ventas según tu registro diario, sumando el colchón de merma histórica y comparándolo contra el stock mínimo para evitar sobre-compras o quiebres de inventario.
+                            </p>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-3 border-t">
+                            <button onclick="navigateTo(3)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Anterior
+                            </button>
+                            <button onclick="navigateTo(5)" class="bg-chifa-600 hover:bg-chifa-700 text-white font-bold py-2.5 px-6 rounded-lg text-sm shadow transition">
+                                Generar Pedido a Proveedores &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 5: PEDIDO A PROVEEDORES -->
+                <div id="screen-5" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">5</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Pedido a proveedores</h2>
+                                <p class="text-xs text-chifa-100">El encargado selecciona al proveedor, confirma cantidades y envía el pedido por WhatsApp o correo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-xs uppercase border-b">
+                                        <th class="p-3">Ingrediente</th>
+                                        <th class="p-3">Cantidad Pedida</th>
+                                        <th class="p-3">Proveedor Asignado</th>
+                                        <th class="p-3 text-right">Precio Est. (S/)</th>
+                                        <th class="p-3 text-right">Subtotal (S/)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-table-body" class="divide-y divide-gray-100">
+                                    <!-- Dynamic rows from purchase suggestions -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200 gap-4">
+                            <div>
+                                <span class="text-xs uppercase font-bold text-gray-500">Total Estimado del Pedido</span>
+                                <p id="orders-total-price" class="text-2xl font-black text-chifa-900">S/ 0.00</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                                <button onclick="simulateWhatsApp()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-lg text-sm shadow flex items-center justify-center gap-2">
+                                    <i class="fa-brands fa-whatsapp text-lg"></i> Enviar por WhatsApp
+                                </button>
+                                <button onclick="simulateEmail()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg text-sm shadow flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-envelope"></i> Enviar por Correo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button onclick="navigateTo(4)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Volver a Sugerencias
+                            </button>
+                            <button onclick="navigateTo(6)" class="bg-chifa-600 hover:bg-chifa-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow">
+                                Ir a Seguimiento de Entregas &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 6: SEGUIMIENTO DE ENTREGAS -->
+                <div id="screen-6" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">6</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Seguimiento de entregas</h2>
+                                <p class="text-xs text-chifa-100">Se registra la fecha y hora estimada de entrega y el estado del pedido.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-6">
+                        <!-- Filtros de Estado -->
+                        <div class="flex flex-wrap gap-2 border-b pb-3" id="tracking-filters">
+                            <button onclick="filterTracking('todos')" class="tracking-filter-btn bg-chifa-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow">Todos (3)</button>
+                            <button onclick="filterTracking('Pendiente')" class="tracking-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">Pendientes (1)</button>
+                            <button onclick="filterTracking('En camino')" class="tracking-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">En Camino (1)</button>
+                            <button onclick="filterTracking('Entregado')" class="tracking-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">Entregados (1)</button>
+                        </div>
+
+                        <!-- Tabla de Pedidos -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-xs uppercase border-b">
+                                        <th class="p-3">Proveedor</th>
+                                        <th class="p-3">Insumo</th>
+                                        <th class="p-3">Cantidad</th>
+                                        <th class="p-3">Fecha / Hora Entrega</th>
+                                        <th class="p-3">Estado Actual</th>
+                                        <th class="p-3 text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tracking-table-body" class="divide-y divide-gray-100">
+                                    <!-- Dynamic Delivery Tracking -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Timeline del pedido seleccionado -->
+                        <div class="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                            <h4 class="font-bold text-sm text-chifa-900 mb-4 flex items-center justify-between">
+                                <span><i class="fa-solid fa-route text-chifa-600"></i> Estado del pedido en tiempo real: <span id="timeline-supplier-name" class="text-chifa-700">San Fernando (Pollo)</span></span>
+                                <span class="text-xs text-gray-500 font-normal">Haz clic para avanzar estado</span>
+                            </h4>
+                            
+                            <div class="flex justify-between items-center relative px-4 sm:px-10 py-4">
+                                <div class="absolute left-10 right-10 top-1/2 h-1 bg-gray-300 -translate-y-1/2 z-0"></div>
+                                <div id="timeline-progress-bar" class="absolute left-10 top-1/2 h-1 bg-emerald-500 -translate-y-1/2 z-0 transition-all duration-500" style="width: 66%;"></div>
+
+                                <div onclick="updateDeliveryStatus(0)" class="z-10 text-center cursor-pointer group">
+                                    <div id="step-node-0" class="w-9 h-9 rounded-full step-completed flex items-center justify-center font-bold text-xs mx-auto transition">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold block mt-2 text-gray-700">Confirmado</span>
+                                    <span class="text-[10px] text-gray-400 block">27/10 5:00 p.m.</span>
+                                </div>
+
+                                <div onclick="updateDeliveryStatus(1)" class="z-10 text-center cursor-pointer group">
+                                    <div id="step-node-1" class="w-9 h-9 rounded-full step-completed flex items-center justify-center font-bold text-xs mx-auto transition">
+                                        <i class="fa-solid fa-truck-fast"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold block mt-2 text-gray-700">En ruta</span>
+                                    <span class="text-[10px] text-gray-400 block">28/10 7:30 a.m.</span>
+                                </div>
+
+                                <div onclick="updateDeliveryStatus(2)" class="z-10 text-center cursor-pointer group">
+                                    <div id="step-node-2" class="w-9 h-9 rounded-full step-active flex items-center justify-center font-bold text-xs mx-auto transition">
+                                        <i class="fa-solid fa-box-open"></i>
+                                    </div>
+                                    <span class="text-xs font-bold block mt-2 text-chifa-700">En entrega</span>
+                                    <span class="text-[10px] text-gray-400 block">28/10 8:00 a.m.</span>
+                                </div>
+
+                                <div onclick="updateDeliveryStatus(3)" class="z-10 text-center cursor-pointer group">
+                                    <div id="step-node-3" class="w-9 h-9 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold text-xs mx-auto transition">
+                                        <i class="fa-solid fa-house-circle-check"></i>
+                                    </div>
+                                    <span class="text-xs font-semibold block mt-2 text-gray-500">Entregado</span>
+                                    <span class="text-[10px] text-gray-400 block">Pendiente</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button onclick="navigateTo(5)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Volver a Pedidos
+                            </button>
+                            <button onclick="navigateTo(7)" class="bg-chifa-600 hover:bg-chifa-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow">
+                                Ir a Recepción & Calidad &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 7: RECEPCIÓN Y CONTROL DE CALIDAD -->
+                <div id="screen-7" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">7</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Recepción y control de calidad</h2>
+                                <p class="text-xs text-chifa-100">Al recibir los insumos, se verifica la cantidad, la calidad y el vencimiento.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-6">
+                        <div class="flex flex-wrap gap-4 items-center bg-gray-50 p-3 rounded-xl border">
+                            <div class="flex items-center space-x-2">
+                                <label class="text-xs font-bold text-gray-700">Proveedor:</label>
+                                <select id="reception-supplier" class="border rounded p-1.5 text-xs font-semibold">
+                                    <option value="San Fernando">San Fernando</option>
+                                    <option value="Mercado Mayorista">Mercado Mayorista</option>
+                                    <option value="Alicorp">Alicorp</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <label class="text-xs font-bold text-gray-700">Fecha Recepción:</label>
+                                <input type="date" value="2026-10-28" class="border rounded p-1.5 text-xs">
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-xs uppercase border-b">
+                                        <th class="p-3">Insumo</th>
+                                        <th class="p-3">Cantidad Recibida</th>
+                                        <th class="p-3">N° Lote</th>
+                                        <th class="p-3">F. Vencimiento</th>
+                                        <th class="p-3 text-center">Estado Calidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reception-table-body" class="divide-y divide-gray-100">
+                                    <!-- Dynamic Reception Records -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Evidencia fotográfica simulada -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="border rounded-xl p-3 flex items-center space-x-3 bg-gray-50">
+                                <div class="w-16 h-12 bg-red-200 rounded flex items-center justify-center text-chifa-800 font-black text-xs">
+                                    <i class="fa-solid fa-drumstick-bite text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-800">Caja Pollo San Fernando</p>
+                                    <span class="text-[10px] text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> Temperatura ok (-2°C)</span>
+                                </div>
+                            </div>
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-3 flex items-center justify-center text-gray-400 hover:bg-gray-50 cursor-pointer">
+                                <i class="fa-solid fa-plus mr-2"></i> <span class="text-xs font-semibold">Agregar foto de inspección</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button onclick="navigateTo(6)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Volver a Entregas
+                            </button>
+                            <button onclick="confirmReception()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg text-sm shadow">
+                                <i class="fa-solid fa-circle-check mr-1"></i> Guardar Ingreso a Almacén
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 8: INVENTARIO EN ALMACÉN (STOCK REAL) -->
+                <div id="screen-8" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">8</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Inventario en almacén (stock real)</h2>
+                                <p class="text-xs text-chifa-100">Control de stock con niveles mínimos y máximos, alertas de reposición y vencimientos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-5">
+                        <!-- Filtros por Categoría -->
+                        <div class="flex flex-wrap gap-2 border-b pb-3" id="inventory-category-filters">
+                            <button onclick="filterInventory('todos')" class="inv-filter-btn bg-chifa-700 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow">Todos</button>
+                            <button onclick="filterInventory('Granos')" class="inv-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">Granos</button>
+                            <button onclick="filterInventory('Carnes')" class="inv-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">Carnes</button>
+                            <button onclick="filterInventory('Verduras')" class="inv-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">Verduras</button>
+                            <button onclick="filterInventory('Salsas')" class="inv-filter-btn bg-gray-200 text-gray-700 text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-300">Salsas & Aceites</button>
+                        </div>
+
+                        <!-- Tabla Inventario Real -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-xs uppercase border-b">
+                                        <th class="p-3">Insumo</th>
+                                        <th class="p-3">Stock Actual</th>
+                                        <th class="p-3">Stock Mín.</th>
+                                        <th class="p-3">Stock Máx.</th>
+                                        <th class="p-3">Vencimiento</th>
+                                        <th class="p-3 text-center">Estado Almacén</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table-body" class="divide-y divide-gray-100">
+                                    <!-- Dynamic Inventory Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Alerta Automática de Bajo Stock -->
+                        <div id="low-stock-alert" class="bg-red-50 border-l-4 border-red-600 p-4 rounded-r-xl flex flex-col sm:flex-row justify-between items-center gap-3">
+                            <div class="flex items-center space-x-3">
+                                <i class="fa-solid fa-triangle-exclamation text-red-600 text-2xl"></i>
+                                <div>
+                                    <h4 class="font-bold text-red-900 text-sm">Cebolla china por debajo del stock mínimo</h4>
+                                    <p class="text-xs text-red-700">Se recomienda comprar 1 jaba (20 kg) inmediatamente.</p>
+                                </div>
+                            </div>
+                            <button onclick="navigateTo(4)" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-xs shadow transition whitespace-nowrap">
+                                Ver sugerencia de compra &rarr;
+                            </button>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2 border-t">
+                            <button onclick="navigateTo(7)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Volver a Recepción
+                            </button>
+                            <button onclick="navigateTo(9)" class="bg-chifa-600 hover:bg-chifa-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow">
+                                Ir a Abastecimiento Woks &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANTALLA 9: ABASTECIMIENTO POR ESTACIÓN Y RESULTADOS -->
+                <div id="screen-9" class="screen-view hidden space-y-4">
+                    <div class="bg-chifa-900 text-white p-4 rounded-t-xl flex justify-between items-center shadow-md">
+                        <div class="flex items-center space-x-3">
+                            <span class="bg-chifa-600 font-extrabold text-sm px-3 py-1 rounded-full border border-white">9</span>
+                            <div>
+                                <h2 class="text-lg font-bold">Abastecimiento por estación y resultados</h2>
+                                <p class="text-xs text-chifa-100">Se distribuyen los insumos a los dos woks y se visualizan los indicadores de mejora.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-b-xl shadow-md p-5 border border-gray-200 space-y-6">
+                        
+                        <!-- Distribución a los 2 Woks -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <!-- LÍNEA 1: WOK CHAUFA / TALLARÍN -->
+                            <div class="border-2 border-chifa-700 rounded-xl overflow-hidden shadow-sm flex flex-col justify-between">
+                                <div class="bg-chifa-700 text-white p-3 text-center">
+                                    <h3 class="font-black text-base uppercase tracking-wider">LÍNEA 1 - Chaufa / Tallarín</h3>
+                                    <p class="text-[11px] text-chifa-100">Estación wok alta velocidad</p>
+                                </div>
+                                <div class="p-4 space-y-3 flex-1">
+                                    <div class="h-28 bg-cover bg-center rounded-lg shadow-inner flex items-end p-2 text-white font-bold text-xs" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent), url('https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=500&q=80');">
+                                        <span>Arroz Chaufa & Tallarín Saltado</span>
+                                    </div>
+                                    <table class="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-100 text-gray-600 uppercase border-b">
+                                                <th class="p-2">Insumo</th>
+                                                <th class="p-2 text-center">Cant. Preparar</th>
+                                                <th class="p-2">Unidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y text-gray-700">
+                                            <tr><td class="p-2 font-semibold">Arroz cocido</td><td class="p-2 text-center font-bold">5</td><td class="p-2">kg</td></tr>
+                                            <tr><td class="p-2 font-semibold">Pollo en tiras</td><td class="p-2 text-center font-bold">3</td><td class="p-2">kg</td></tr>
+                                            <tr><td class="p-2 font-semibold">Cebolla china</td><td class="p-2 text-center font-bold">1</td><td class="p-2">kg</td></tr>
+                                            <tr><td class="p-2 font-semibold">Zanahoria picada</td><td class="p-2 text-center font-bold">1</td><td class="p-2">kg</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="p-3 bg-gray-50 border-t">
+                                    <button onclick="confirmStationPrep('Línea 1')" class="w-full bg-chifa-700 hover:bg-chifa-800 text-white font-bold py-2 rounded-lg text-xs shadow transition">
+                                        <i class="fa-solid fa-fire-burner mr-1"></i> Confirmar Preparación Wok 1
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- LÍNEA 2: WOK PLATOS ESPECIALES -->
+                            <div class="border-2 border-emerald-700 rounded-xl overflow-hidden shadow-sm flex flex-col justify-between">
+                                <div class="bg-emerald-800 text-white p-3 text-center">
+                                    <h3 class="font-black text-base uppercase tracking-wider">LÍNEA 2 - Platos Especiales</h3>
+                                    <p class="text-[11px] text-emerald-100">Kam Lu Wantán / Ti Pa Kay</p>
+                                </div>
+                                <div class="p-4 space-y-3 flex-1">
+                                    <div class="h-28 bg-cover bg-center rounded-lg shadow-inner flex items-end p-2 text-white font-bold text-xs" style="background-image: linear-gradient(to top, rgba(0,0,0,0.8), transparent), url('https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=500&q=80');">
+                                        <span>Especialidades Agridulces</span>
+                                    </div>
+                                    <table class="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-100 text-gray-600 uppercase border-b">
+                                                <th class="p-2">Insumo</th>
+                                                <th class="p-2 text-center">Cant. Preparar</th>
+                                                <th class="p-2">Unidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y text-gray-700">
+                                            <tr><td class="p-2 font-semibold">Wantán hojarasca</td><td class="p-2 text-center font-bold">200</td><td class="p-2">unid.</td></tr>
+                                            <tr><td class="p-2 font-semibold">Cerdo en tiras</td><td class="p-2 text-center font-bold">3</td><td class="p-2">kg</td></tr>
+                                            <tr><td class="p-2 font-semibold">Pimiento / Piña</td><td class="p-2 text-center font-bold">3</td><td class="p-2">kg</td></tr>
+                                            <tr><td class="p-2 font-semibold">Salsa agridulce</td><td class="p-2 text-center font-bold">2</td><td class="p-2">L</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="p-3 bg-gray-50 border-t">
+                                    <button onclick="confirmStationPrep('Línea 2')" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded-lg text-xs shadow transition">
+                                        <i class="fa-solid fa-fire-burner mr-1"></i> Confirmar Preparación Wok 2
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dashboard KPI de Resultados de la Semana -->
+                        <div class="bg-gray-50 border rounded-xl p-5 space-y-4">
+                            <h3 class="font-extrabold text-chifa-900 text-sm uppercase tracking-wider flex items-center justify-between border-b pb-2">
+                                <span><i class="fa-solid fa-chart-line text-chifa-600"></i> Resultados de la Semana (KPIs de Eficiencia)</span>
+                                <span class="text-xs text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded">Metas Logradas</span>
+                            </h3>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <span class="text-xs text-gray-500 font-bold uppercase block">Consumo Total</span>
+                                    <p id="kpi-consumption" class="text-2xl font-black text-gray-800 mt-1">128 kg</p>
+                                    <span class="text-xs text-emerald-600 font-bold flex items-center justify-center gap-1 mt-1">
+                                        <i class="fa-solid fa-arrow-up"></i> 8% Eficiencia
+                                    </span>
+                                </div>
+
+                                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <span class="text-xs text-gray-500 font-bold uppercase block">Merma Total</span>
+                                    <p id="kpi-waste" class="text-2xl font-black text-chifa-600 mt-1">3.5 kg</p>
+                                    <span class="text-xs text-emerald-600 font-bold flex items-center justify-center gap-1 mt-1">
+                                        <i class="fa-solid fa-arrow-down"></i> 30% Reducción
+                                    </span>
+                                </div>
+
+                                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                    <span class="text-xs text-gray-500 font-bold uppercase block">Costo de Inventario</span>
+                                    <p id="kpi-cost" class="text-2xl font-black text-gray-800 mt-1">S/ 1,240</p>
+                                    <span class="text-xs text-emerald-600 font-bold flex items-center justify-center gap-1 mt-1">
+                                        <i class="fa-solid fa-arrow-down"></i> 20% Ahorro
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-2">
+                            <button onclick="navigateTo(8)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm">
+                                &larr; Volver a Inventario
+                            </button>
+                            <button onclick="navigateTo(1)" class="bg-chifa-800 hover:bg-chifa-900 text-white font-bold py-2.5 px-6 rounded-lg text-sm shadow flex items-center gap-2">
+                                <i class="fa-solid fa-rotate-right"></i> Reiniciar Ciclo Diario &rarr;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Informativo -->
+            <footer class="mt-8 text-center text-xs text-gray-400 py-2 border-t border-gray-200">
+                <p>Chifa Conectado &copy; 2026 - Prototipo Funcional Integrado para Gestión Logística de Chifas</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Modal para Simulación WhatsApp / Correo -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="modal-title" class="font-bold text-lg text-chifa-900 flex items-center gap-2">
+                    <!-- Title icon -->
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="text-sm text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded-lg font-mono border">
+                <!-- Message preview -->
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-xs">
+                    Cerrar
+                </button>
+                <button onclick="confirmModalAction()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">
+                    Confirmar Envío Real
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC & STATE PERSISTENCE -->
+    <script>
+        // --- DATA DE PRUEBA INICIAL ---
+        const initialData = {
+            sales: [
+                { id: 'p1', name: 'Chaufa de pollo', qty: 45, price: 15.00 },
+                { id: 'p2', name: 'Tallarín saltado', qty: 30, price: 15.00 },
+                { id: 'p3', name: 'Kam Lu Wantán', qty: 25, price: 18.00 },
+                { id: 'p4', name: 'Ti Pa Kay', qty: 20, price: 18.00 },
+                { id: 'p5', name: 'Otros platos', qty: 10, price: 15.00 }
+            ],
+            inventory: [
+                { id: 'i1', name: 'Arroz', category: 'Granos', stock: 150, min: 100, max: 300, unit: 'kg', exp: '12/2027', status: 'optimal', presentation: 'Saco 50 kg' },
+                { id: 'i2', name: 'Pollo', category: 'Carnes', stock: 20, min: 40, max: 100, unit: 'kg', exp: '02/11/2026', status: 'critical', presentation: 'Caja 20 kg' },
+                { id: 'i3', name: 'Cebolla china', category: 'Verduras', stock: 5, min: 8, max: 25, unit: 'kg', exp: '05/11/2026', status: 'warning', presentation: 'Jaba 20 kg' },
+                { id: 'i4', name: 'Zanahoria', category: 'Verduras', stock: 8, min: 10, max: 25, unit: 'kg', exp: '04/11/2026', status: 'warning', presentation: 'Jaba 20 kg' },
+                { id: 'i5', name: 'Aceite', category: 'Salsas', stock: 1, min: 2, max: 5, unit: 'bidón', exp: '03/2027', status: 'warning', presentation: 'Bidón 20 L' },
+                { id: 'i6', name: 'Sillao', category: 'Salsas', stock: 1, min: 1, max: 4, unit: 'caja', exp: '04/2027', status: 'optimal', presentation: 'Caja 12 x 1 L' }
+            ],
+            wastes: [
+                { id: 'w1', ingredient: 'Cebolla china', qty: 0.8, reason: 'Se malogró', station: 'Línea 1 - Chaufa/Tallarín', date: '21/10/2026' },
+                { id: 'w2', ingredient: 'Pollo', qty: 0.5, reason: 'Porciones mal cortadas', station: 'Línea 2 - Platos Especiales', date: '21/10/2026' }
+            ],
+            deliveries: [
+                { id: 'd1', supplier: 'San Fernando', item: 'Pollo', qty: '40 kg', date: '28/10 8:00 a.m.', status: 'En camino', progress: 2 },
+                { id: 'd2', supplier: 'Mercado Mayorista', item: 'Verduras varias', qty: '20 kg', date: '29/10 8:00 a.m.', status: 'Pendiente', progress: 0 },
+                { id: 'd3', supplier: 'Alicorp', item: 'Aceite vegetal', qty: '20 L', date: '28/10 10:00 a.m.', status: 'Entregado', progress: 3 }
+            ]
+        };
+
+        // --- GESTIÓN DE ESTADO LOCALSTORAGE ---
+        let appData = JSON.parse(localStorage.getItem('chifa_app_data')) || initialData;
+
+        function saveToStorage() {
+            localStorage.setItem('chifa_app_data', JSON.stringify(appData));
+            updateAllScreens();
+        }
+
+        function resetData() {
+            if (confirm("¿Deseas reiniciar todos los datos a su estado inicial de prueba?")) {
+                appData = JSON.parse(JSON.stringify(initialData));
+                saveToStorage();
+                alert("Datos reiniciados correctamente.");
+            }
+        }
+
+        // --- NAVEGACIÓN ENTRE PANTALLAS ---
+        let currentScreen = 1;
+
+        function navigateTo(screenNumber) {
+            currentScreen = screenNumber;
+            document.querySelectorAll('.screen-view').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`screen-${screenNumber}`).classList.remove('hidden');
+
+            // Actualizar botones menú lateral
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-tab'));
+            const activeNav = document.getElementById(`nav-${screenNumber}`);
+            if (activeNav) activeNav.classList.add('active-tab');
+
+            // En móvil, ocultar el sidebar tras navegar
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+
+            // Scroll al top
+            document.querySelector('main').scrollTop = 0;
+        }
+
+        // Sidebar móvil toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+        });
+        document.getElementById('close-sidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+        });
+
+        // --- RENDERIZADO DE PANTALLAS ---
+
+        // PANTALLA 1: Ventas
+        function renderSales() {
+            const tbody = document.getElementById('sales-table-body');
+            tbody.innerHTML = '';
+            let grandTotal = 0;
+
+            appData.sales.forEach((item, index) => {
+                const subtotal = item.qty * item.price;
+                grandTotal += subtotal;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50 transition";
+                row.innerHTML = `
+                    <td class="p-3 font-semibold text-gray-800 flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-chifa-600"></span>
+                        <span>${item.name}</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <input type="number" min="0" value="${item.qty}" onchange="updateSaleQty(${index}, this.value)" 
+                            class="w-20 text-center border border-gray-300 rounded-lg p-1 font-bold focus:ring-2 focus:ring-chifa-600">
+                    </td>
+                    <td class="p-3 text-right font-medium text-gray-600">S/ ${item.price.toFixed(2)}</td>
+                    <td class="p-3 text-right font-bold text-chifa-900">S/ ${subtotal.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('sales-grand-total').innerText = `S/ ${grandTotal.toFixed(2)}`;
+        }
+
+        function updateSaleQty(index, newQty) {
+            appData.sales[index].qty = Math.max(0, parseInt(newQty) || 0);
+            saveToStorage();
+        }
+
+        function saveSales() {
+            saveToStorage();
+            alert("¡Ventas registradas con éxito! El sistema re-calculó los inventarios y pronósticos.");
+            navigateTo(2);
+        }
+
+        // PANTALLA 2: Mermas
+        function renderWastes() {
+            // Cargar select de ingredientes
+            const select = document.getElementById('waste-ingredient');
+            select.innerHTML = '';
+            appData.inventory.forEach(inv => {
+                const opt = document.createElement('option');
+                opt.value = inv.name;
+                opt.textContent = `${inv.name} (Stock: ${inv.stock} ${inv.unit})`;
+                select.appendChild(opt);
+            });
+
+            // Cargar historial
+            const tbody = document.getElementById('waste-history-body');
+            tbody.innerHTML = '';
+            document.getElementById('waste-count-badge').innerText = `${appData.wastes.length} registros`;
+
+            appData.wastes.forEach((w, index) => {
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="p-2.5 font-bold text-gray-800">${w.ingredient}</td>
+                    <td class="p-2.5 font-semibold text-red-600">${w.qty} kg/L</td>
+                    <td class="p-2.5 text-gray-600 text-xs">${w.reason}</td>
+                    <td class="p-2.5 text-gray-500 text-xs">${w.station}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="deleteWaste(${index})" class="text-red-500 hover:text-red-700 text-xs" title="Eliminar">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function addWasteRecord(e) {
+            e.preventDefault();
+            const ingredient = document.getElementById('waste-ingredient').value;
+            const qty = parseFloat(document.getElementById('waste-qty').value) || 0.5;
+            const reason = document.getElementById('waste-reason').value;
+            const station = document.getElementById('waste-station').value;
+
+            appData.wastes.unshift({
+                id: 'w' + Date.now(),
+                ingredient,
+                qty,
+                reason,
+                station,
+                date: '21/10/2026'
+            });
+
+            saveToStorage();
+            alert("Merma registrada correctamente.");
+        }
+
+        function deleteWaste(index) {
+            appData.wastes.splice(index, 1);
+            saveToStorage();
+        }
+
+        // PANTALLA 3: Análisis Mermas Suma
+        function renderWasteAnalysis() {
+            const sum = appData.wastes.reduce((acc, curr) => acc + curr.qty, 0);
+            document.getElementById('total-waste-sum').innerText = `${sum.toFixed(1)} kg`;
+        }
+
+        // PANTALLA 4: Pronóstico de Demanda
+        function renderForecast() {
+            const tbody = document.getElementById('forecast-table-body');
+            tbody.innerHTML = '';
+
+            // Lógica simple de pronóstico dinámico según ventas
+            const totalSalesQty = appData.sales.reduce((acc, curr) => acc + curr.qty, 0);
+
+            appData.inventory.forEach(inv => {
+                let estimatedConsumption = Math.round(totalSalesQty * 0.4);
+                let estimatedWaste = 2;
+                let expectedStock = inv.stock - estimatedConsumption - estimatedWaste;
+                let toBuy = 0;
+                let statusBadge = '';
+
+                if (expectedStock < inv.min) {
+                    toBuy = Math.max(20, (inv.min * 2) - expectedStock);
+                    statusBadge = `<span class="bg-red-100 text-red-700 font-extrabold px-3 py-1 rounded-full text-xs">Comprar ${toBuy} ${inv.unit}</span>`;
+                } else {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full text-xs">No comprar</span>`;
+                }
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="p-3 font-bold text-gray-800">${inv.name}</td>
+                    <td class="p-3 text-gray-600">${inv.stock} ${inv.unit}</td>
+                    <td class="p-3 text-gray-600">${estimatedConsumption} ${inv.unit}</td>
+                    <td class="p-3 text-red-600 font-semibold">${estimatedWaste} ${inv.unit}</td>
+                    <td class="p-3 font-bold ${expectedStock < 0 ? 'text-red-600' : 'text-gray-700'}">${expectedStock} ${inv.unit}</td>
+                    <td class="p-3 text-center">${statusBadge}</td>
+                    <td class="p-3 text-xs text-gray-500">${inv.presentation}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // PANTALLA 5: Pedido a Proveedores
+        function renderOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+            let grandTotal = 0;
+
+            const mockOrders = [
+                { item: 'Pollo fresco', qty: '40 kg', supplier: 'San Fernando', price: 140, total: 560 },
+                { item: 'Cebolla china', qty: '10 kg', supplier: 'Mercado Mayorista', price: 30, total: 300 },
+                { item: 'Zanahoria fresca', qty: '10 kg', supplier: 'Mercado Mayorista', price: 25, total: 250 },
+                { item: 'Aceite vegetal', qty: '20 L', supplier: 'Alicorp', price: 95, total: 95 },
+                { item: 'Sillao oscuro', qty: '2 L', supplier: 'Kikkoman', price: 40, total: 80 }
+            ];
+
+            mockOrders.forEach(ord => {
+                grandTotal += ord.total;
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="p-3 font-bold text-gray-800">${ord.item}</td>
+                    <td class="p-3 text-gray-600 font-medium">${ord.qty}</td>
+                    <td class="p-3 text-chifa-800 font-semibold">${ord.supplier}</td>
+                    <td class="p-3 text-right font-medium">S/ ${ord.price.toFixed(2)}</td>
+                    <td class="p-3 text-right font-bold text-gray-900">S/ ${ord.total.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('orders-total-price').innerText = `S/ ${grandTotal.toFixed(2)}`;
+        }
+
+        // PANTALLA 6: Seguimiento
+        function renderTracking(filter = 'todos') {
+            const tbody = document.getElementById('tracking-table-body');
+            tbody.innerHTML = '';
+
+            appData.deliveries.forEach((del, idx) => {
+                if (filter !== 'todos' && del.status !== filter) return;
+
+                let statusColor = 'bg-gray-100 text-gray-700';
+                if (del.status === 'En camino') statusColor = 'bg-emerald-100 text-emerald-800';
+                if (del.status === 'Pendiente') statusColor = 'bg-red-100 text-red-800';
+                if (del.status === 'Entregado') statusColor = 'bg-blue-100 text-blue-800';
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="p-3 font-bold text-gray-800">${del.supplier}</td>
+                    <td class="p-3 text-gray-600">${del.item}</td>
+                    <td class="p-3 font-medium">${del.qty}</td>
+                    <td class="p-3 text-xs text-gray-500">${del.date}</td>
+                    <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${statusColor}">${del.status}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="selectDeliveryForTimeline(${idx})" class="text-chifa-600 hover:underline font-bold text-xs">
+                            Ver Tracking
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function selectDeliveryForTimeline(idx) {
+            const del = appData.deliveries[idx];
+            document.getElementById('timeline-supplier-name').innerText = `${del.supplier} (${del.item})`;
+            updateDeliveryNodesUI(del.progress);
+        }
+
+        function updateDeliveryStatus(step) {
+            appData.deliveries[0].progress = step;
+            if (step === 0) appData.deliveries[0].status = 'Pendiente';
+            if (step === 1 || step === 2) appData.deliveries[0].status = 'En camino';
+            if (step === 3) appData.deliveries[0].status = 'Entregado';
+            saveToStorage();
+        }
+
+        function updateDeliveryNodesUI(progress) {
+            const percentages = ['0%', '33%', '66%', '100%'];
+            document.getElementById('timeline-progress-bar').style.width = percentages[progress];
+
+            for (let i = 0; i < 4; i++) {
+                const node = document.getElementById(`step-node-${i}`);
+                if (i <= progress) {
+                    node.className = "w-9 h-9 rounded-full step-completed flex items-center justify-center font-bold text-xs mx-auto transition";
+                } else if (i === progress + 1) {
+                    node.className = "w-9 h-9 rounded-full step-active flex items-center justify-center font-bold text-xs mx-auto transition";
+                } else {
+                    node.className = "w-9 h-9 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold text-xs mx-auto transition";
+                }
+            }
+        }
+
+        function filterTracking(status) {
+            renderTracking(status);
+        }
+
+        // PANTALLA 7: Recepción
+        function renderReception() {
+            const tbody = document.getElementById('reception-table-body');
+            tbody.innerHTML = '';
+
+            const items = [
+                { item: 'Pollo fresco', qty: '4 cajas (40 kg)', lot: 'P-458', exp: '02/11/2026', status: 'Conforme' },
+                { item: 'Arroz extra', qty: '1 saco (50 kg)', lot: 'A-125', exp: '12/2027', status: 'Conforme' },
+                { item: 'Cebolla china', qty: '1 jaba (10 kg)', lot: 'C-302', exp: '05/11/2026', status: 'Observado' },
+                { item: 'Zanahoria', qty: '1 jaba (10 kg)', lot: 'Z-205', exp: '04/11/2026', status: 'Conforme' }
+            ];
+
+            items.forEach(i => {
+                const isOk = i.status === 'Conforme';
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="p-3 font-bold text-gray-800">${i.item}</td>
+                    <td class="p-3 text-gray-600">${i.qty}</td>
+                    <td class="p-3 font-mono text-xs">${i.lot}</td>
+                    <td class="p-3 text-xs text-gray-500">${i.exp}</td>
+                    <td class="p-3 text-center">
+                        ${isOk 
+                            ? '<span class="text-emerald-600 text-lg"><i class="fa-solid fa-circle-check"></i></span>' 
+                            : '<span class="text-amber-500 text-lg" title="Empaque ligeramente húmedo"><i class="fa-solid fa-circle-exclamation"></i></span>'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function confirmReception() {
+            alert("Insumos verificados y cargados al stock real del almacén.");
+            navigateTo(8);
+        }
+
+        // PANTALLA 8: Inventario Real
+        function renderInventory(catFilter = 'todos') {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+
+            appData.inventory.forEach(inv => {
+                if (catFilter !== 'todos' && inv.category !== catFilter) return;
+
+                let statusBadge = '';
+                if (inv.stock < inv.min) {
+                    statusBadge = `<span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle text-[10px] mr-1"></i>Crítico</span>`;
+                } else if (inv.stock <= inv.min * 1.5) {
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle text-[10px] mr-1"></i>Bajo</span>`;
+                } else {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle text-[10px] mr-1"></i>Óptimo</span>`;
+                }
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50";
+                row.innerHTML = `
+                    <td class="p-3 font-bold text-gray-800">${inv.name}</td>
+                    <td class="p-3 font-extrabold ${inv.stock < inv.min ? 'text-red-600' : 'text-gray-900'}">${inv.stock} ${inv.unit}</td>
+                    <td class="p-3 text-gray-500 text-xs">${inv.min} ${inv.unit}</td>
+                    <td class="p-3 text-gray-500 text-xs">${inv.max} ${inv.unit}</td>
+                    <td class="p-3 text-xs text-gray-500">${inv.exp}</td>
+                    <td class="p-3 text-center">${statusBadge}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterInventory(cat) {
+            renderInventory(cat);
+        }
+
+        // PANTALLA 9: Woks
+        function confirmStationPrep(stationName) {
+            alert(`¡Ingredientes para ${stationName} despachados desde almacén a la cocina!`);
+        }
+
+        // ACTUALIZAR TODA LA APLICACIÓN
+        function updateAllScreens() {
+            renderSales();
+            renderWastes();
+            renderWasteAnalysis();
+            renderForecast();
+            renderOrders();
+            renderTracking();
+            renderReception();
+            renderInventory();
+        }
+
+        // --- MODALES Y SIMULACIONES DE ENVÍO ---
+        function simulateWhatsApp() {
+            document.getElementById('modal-title').innerHTML = `<i class="fa-brands fa-whatsapp text-emerald-600"></i> Pedido de Insumos vía WhatsApp`;
+            document.getElementById('modal-body').innerText = 
+                `*CHIFA CONECTADO - PEDIDO DE COMPRA*\n` +
+                `Fecha: 28/10/2026\n\n` +
+                `- Pollo San Fernando: 40 kg\n` +
+                `- Cebolla china: 10 kg\n` +
+                `- Zanahoria: 10 kg\n` +
+                `- Aceite Alicorp: 20 L\n\n` +
+                `*Total Estimado: S/ 1,285.00*\n` +
+                `Por favor confirmar hora estimada de llegada.`;
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+
+        function simulateEmail() {
+            document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-envelope text-blue-600"></i> Orden de Compra por Correo`;
+            document.getElementById('modal-body').innerText = 
+                `Para: proveedores@chifaconectado.pe\n` +
+                `Asunto: Orden de Compra Semanal - Chifa Conectado\n\n` +
+                `Estimado proveedor,\n\nAdjuntamos el requerimiento de compra de insumos para la presente semana según la sugerencia inteligente del sistema logístico.`;
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+function closeModal() {
+            document.getElementById('modal-container').classList.add('hidden');
+        }
+
+        function confirmModalAction() {
+            closeModal();
+            alert("¡Mensaje transmitido correctamente al proveedor!");
+            navigateTo(6);
+        }
+
+        // INIT APP
+        window.onload = function() {
+            updateAllScreens();
+            // Iniciar en pantalla 1
+            navigateTo(1);
+        };
+    </script>
+</body>
+</html>
